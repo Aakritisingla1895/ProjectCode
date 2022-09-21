@@ -21,11 +21,15 @@
             <input type="password" class="form-control" id="password" name="password" required>            
         </div>
         <button type="submit" class="btn btn-primary">Submit</button> 
-        <button type="submit" class="btn btn-primary">Forgot Password</button>
+    
     </form>
     
     {% if invalid %}
         <p style="margin-top: 0.5em; color: #eb4823">Invalid username or password. Please try again.</p>
     {% endif %}
+
+
+    <p>{{time}}</p>
+
 </div>
 {% include 'footer.html' %}

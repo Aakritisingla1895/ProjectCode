@@ -93,7 +93,11 @@ def dashboard(request: Request, db: Session = Depends(get_db), user: schemas.Use
     
 @app.get("/")
 def get_login(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "title": "Login"})
+    start = time.time()
+    end = time.time()
+    time_cal = round(end-start)
+    print(time_cal)
+    return templates.TemplateResponse("login.html", {"request": request, "title": "Login", "time": time_cal})
 
 @app.post("/")
 def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -112,6 +116,8 @@ def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db
     manager.set_cookie(resp,access_token)
 
     end = time.time()
+    time_cal = round(end-start)
+    print(time_cal)
     print('It took {} seconds to finish login function execution.'.format(round(end-start)))
     return resp
 
@@ -150,37 +156,38 @@ def logout(response: Response):
 
 @app.post('/dashboard', response_class=HTMLResponse)
 async def upload(request: Request, file: UploadFile = File(..., media_type="image/png"), db: Session = Depends(get_db), user: schemas.User = Depends(manager)):
+    start = time.time()
+    
     if file.content_type =="image/png":
        
         try:
 
             with open("static/uploads/"+file.filename, 'wb') as buffer:
                 shutil.copyfileobj(file.file, buffer)
-
             url = str("static/uploads/"+file.filename)
-        
             print("saved at", url )
-
             from PIL import Image
-
             image = Image.open(url)
             image.thumbnail((100,90))
-
             thumb_io = BytesIO()
             imgtype = "PNG"
             thumbnail_make_filepath = url.strip('.png')
             # print(imgtype)
             image.save(thumbnail_make_filepath + "_thumbnail"+".png")
-
-
             display_thumbnail =str(thumbnail_make_filepath + "_thumbnail"+".png")
+
+            end = time.time()
+            time_cal = round(end-start)
+            print(time_cal)
+            print('It took {} seconds to finish Upload image function execution.'.format(round(end-start)))
 
         except Exception:
             return {"message": "There was an error uploading the file"}
         finally:
             file.file.close()
 
-        return templates.TemplateResponse("dashboard.html", {"request": request, "filepath":file.filename, "thumbnail":display_thumbnail, "imagefile":url, "user": user})
+     
+        return templates.TemplateResponse("dashboard.html", {"request": request, "filepath":file.filename, "thumbnail":display_thumbnail, "imagefile":url, "time":time_cal, "user": user})
 
     if file.content_type!="image/png":
         print("Invalid file")
@@ -192,15 +199,10 @@ async def upload(request: Request, file: UploadFile = File(..., media_type="imag
 async def gan_process(request: Request, file: bytes = File()):
 
     start = time.time()
-
     file = "test.png" # this is a fixed image for the dummy function
-
     print(len(file)) 
-
     filepath_url = 'static/uploads/test.png'
-
     end = time.time()
-
     time_cal = {}.format(round(end-start))
     print(time_cal)
     print('It took {} seconds to finish GAN processing function execution.'.format(round(end-start)))
