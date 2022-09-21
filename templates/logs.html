@@ -1,0 +1,15 @@
+
+<label for="msg"><b>Message</b></label>
+<p id="msg" name="msg"></p>
+
+<script>
+   var socket = new WebSocket("ws://localhost:8000/ws")
+   socket.onmessage = function(e){
+    console.log(e.data)
+    }
+
+    socket.onerror = function(e){
+    console.log(e.data)
+    }
+         
+</script>
