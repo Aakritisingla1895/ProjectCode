@@ -24,6 +24,12 @@ import uuid
 from pathlib import Path
 import time
 
+from prototype.model_properties_1 import ModelBuilder
+
+import numpy as np
+import cv2 as cv2 
+from PIL import Image
+
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 ACCESS_TOKEN_EXPIRE_MINUTES=60
@@ -199,9 +205,9 @@ async def upload(request: Request, file: UploadFile = File(..., media_type="imag
 async def gan_process(request: Request, file: bytes = File()):
 
     start = time.time()
-    file = "test.png" # this is a fixed image for the dummy function
+    file = "/static/uploads/Akshay Kumar 3.png" # this is a fixed image for the dummy function
     print(len(file)) 
-    filepath_url = 'static/uploads/test.png'
+    filepath_url = "/static/uploads/Akshay Kumar 3.png"
     end = time.time()
     time_cal = {}.format(round(end-start))
     print(time_cal)
@@ -215,6 +221,53 @@ async def generate_3d_model(file: bytes = File()):
     file = "/static/akshay kumar.glb" # this is a fixed image for the dummy function
 
     return file
+
+def load_image_into_numpy_array(data):
+    npimg=np.frombuffer(data,np.uint8)
+    frame=cv2.imdecode(npimg,cv2.IMREAD_COLOR)
+    return cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+    	
+    #return np.array(Image.open(BytesIO(data)))
+
+@app.get('/check_model', response_class=HTMLResponse)
+async def read_root(request: Request,db: Session = Depends(get_db),  user: schemas.User = Depends(manager)):
+
+    print("28")
+
+    file = 'static/uploads/model_427_6.jpg'
+    img = Image.open(file)
+    # Create a buffer to hold the bytes
+    buf = BytesIO()
+
+    # Save the image as jpeg to the buffer
+    img.save(buf, 'jpeg')
+
+    # Rewind the buffer's file pointer
+    buf.seek(0)
+
+    # Read the bytes from the buffer
+    image_bytes = buf.read()
+
+    image = load_image_into_numpy_array(image_bytes)
+    class_checkpoint='prototype/weights/CharacterClass_effnet_SGD.pt'
+    AMT_checkpoint='prototype/weights/CharacterProperties_effnetB4_adam_no_weighted_orig52.pt'
+    shape_checkpoint='prototype/weights/MeasureProperties_effnet_b4_adam_50.pt'
+    texture_checkpoint='prototype/weights/TextureProperties_effnet_b3_adam.pt'
+   
+    
+    model=ModelBuilder(image,class_checkpoint,AMT_checkpoint,shape_checkpoint,texture_checkpoint)
+    model_attributes=model.get_character_details()
+
+    return templates.TemplateResponse("check_ml_model.html", {"request": request,"ModelAttributes":model_attributes, "user":user})
+
+@app.post('/check_model', response_class=HTMLResponse)
+async def read_root(request: Request, db: Session = Depends(get_db), user: schemas.User = Depends(manager)):
+
+    print("test8")
+    # upload file
+
+    return templates.TemplateResponse("check_ml_model.html", {"request": request, "user":user})
+   
 
 
 @app.websocket("/ws")
